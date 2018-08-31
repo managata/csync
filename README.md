@@ -17,8 +17,7 @@ If you have total 100TB files on a clustered file system and want to rsync them 
       /fs1/src/b/
       /fs1/src/b/c
       /fs1/src/b/d
-    
-    run: ./csync -p 2 -r src_host_a:dst_host_c -r src_host_b:dst_host_d -s /fs1/src -d /fs2/dst
+    commandline: ./csync -p 2 -r src_host_a:dst_host_c -r src_host_b:dst_host_d -s /fs1/src -d /fs2/dst
     
     +----------+  +------------+                         +----------+ 
     |          |--| csync_host |--ssh--------+           |          |
@@ -41,7 +40,7 @@ If you have total 100TB files on a clustered file system and want to rsync them 
      1c. ssh dst_host_d rsync -dgloptADHX src_host_b:/fs1/src/b/ /fs2/dst/b/
      1d. ssh dst_host_d rsync -dgloptADHX src_host_b:/fs1/src/b/c/ /fs2/dst/b/c/
     
-     (after 1a. done)
+     (after 1a. completed)
      2a. ssh dst_host_c rsync -dgloptADHX src_host_a:/fs1/src/b/d/ /fs2/dst/b/d
     
 As you can see above, each rsync will copy files in a directory but not sub-directories.
