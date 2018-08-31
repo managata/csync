@@ -1,6 +1,6 @@
 # csync
 
-'csync' is a multi-node, multi-process rsync executer for copying large amount of files on clustered file system.
+'csync' is a multi-node, multi-process rsync executor for copying large amount of files on clustered file system.
 
 ## Overview
 
@@ -41,7 +41,7 @@ If you have total 100TB files on a clustered file system and want to rsync them 
      1d. ssh dst_host_d rsync -dgloptADHX src_host_b:/fs1/src/b/c/ /fs2/dst/b/c/
     
      (after 1a. completed)
-     2a. ssh dst_host_c rsync -dgloptADHX src_host_a:/fs1/src/b/d/ /fs2/dst/b/d
+     2a. ssh dst_host_c rsync -dgloptADHX src_host_a:/fs1/src/b/d/ /fs2/dst/b/d/
     
 As you can see above, each rsync will copy files in a directory but not sub-directories.
 
