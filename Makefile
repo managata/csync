@@ -50,7 +50,6 @@ dist:
 	mkdir $(TARGET)-$(RELEASE)
 	cp -a $(BINARY) $(TARGET)-$(RELEASE)
 	cp -a LICENSE $(TARGET)-$(RELEASE)
-	cp -a LICENSES $(TARGET)-$(RELEASE)
 	gtar cJ --owner=managata --group=csync -f $(TARGET)-$(RELEASE).tar.xz $(TARGET)-$(RELEASE)
 	rm -rf $(TARGET)-$(RELEASE)
 
@@ -59,5 +58,4 @@ clean:
 	rm -f $(TARGET)
 	rm -f $(BINARY)
 	rm -f $(TARGET).exe
-	rm -f test/key/*
 	rm -rf $(TARGET)-*
