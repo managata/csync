@@ -33,7 +33,7 @@ type Options struct {
 	//
 
 	LogFile  string `short:"o" long:"log-file" description:"write logs to file"`
-	LogLevel int    `short:"O" long:"log-level" description:"[-1|0|1|2|3|4|5|6|7] log level" default:"7"`
+	LogLevel int    `short:"O" long:"log-level" description:"[-1|0|1|2|3|4|5|6|7] log level" default:"5"`
 	Quiet    bool   `short:"q" long:"quiet" description:"same as --log-level=-1"`
 	//
 
