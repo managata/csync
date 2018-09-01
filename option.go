@@ -28,7 +28,7 @@ type Options struct {
 	//	SshOption  []string `short:"b" long:"ssh-option" description:"ssh options" default:"{\"-l\", \"mana\"}"`
 
 	RsyncCommand string   `short:"x" long:"rsync-command" description:"rsync command" default:"rsync"`
-	RsyncOptions []string `short:"y" long:"rsync-option" description:"rsync options" default:"-dgloptADHX"`
+	RsyncOptions []string `short:"y" long:"rsync-option" description:"rsync options" default:"-dgloptADHX" default:"--delete"`
 
 	//
 
