@@ -34,7 +34,9 @@ type Options struct {
 
 	LogFile  string `short:"o" long:"log-file" description:"write logs to file"`
 	LogLevel int    `short:"O" long:"log-level" description:"[-1|0|1|2|3|4|5|6|7] log level" default:"5"`
+	Verbose  bool   `short:"v" long:"verbose" description:"same as --log-level=6"`
 	Quiet    bool   `short:"q" long:"quiet" description:"same as --log-level=-1"`
+
 	//
 
 	//	IgnoreError bool `long:"ignore-error" description:"continue as much as possible"`
@@ -69,6 +71,14 @@ func parseFlags() {
 	if oP.Version {
 		fmt.Fprintf(os.Stderr, "csync: %s\n", version)
 		os.Exit(0)
+	}
+
+	//
+	if oP.Verbose {
+		oP.LogLevel = 6
+	}
+	if oP.Quiet {
+		oP.LogLevel = -1
 	}
 
 	if len(oP.SrcDir) == 0 {
