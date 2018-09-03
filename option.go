@@ -24,7 +24,7 @@ type Options struct {
 	MkdirOptions []string `short:"n" long:"mkdir-option" description:"mkdir options" default:"-p"`
 
 	SshCommand string   `short:"a" long:"ssh-command" description:"ssh command" default:"ssh"`
-	SshOptions []string `short:"b" long:"ssh-option" description:"ssh options"`
+	SshOptions []string `short:"b" long:"ssh-option" description:"ssh options" default:"-tt"`
 	//	SshOption  []string `short:"b" long:"ssh-option" description:"ssh options" default:"{\"-l\", \"mana\"}"`
 
 	RsyncCommand string   `short:"x" long:"rsync-command" description:"rsync command" default:"rsync"`
