@@ -7,7 +7,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -20,6 +19,10 @@ import (
 )
 
 var rn = regexp.MustCompile("\r\n|\n\r|\n|\r")
+
+var qr = strings.NewReplacer("'", "'\"'\"'")
+var wr = strings.NewReplacer("*", "\\*", "?", "\\?", "[", "\\[", "]", "\\]")
+var qwr = strings.NewReplacer("'", "'\"'\"'", "*", "\\*", "?", "\\?", "[", "\\[", "]", "\\]")
 
 func main() {
 	parseFlags()
@@ -142,8 +145,37 @@ func syncDir(ctx context.Context, pc chan string, shost string, dhost string, n 
 	eMsg(E_DEBUG, nil, "syncDir[%d]: start shost:%s dhost:%s", n, shost, dhost)
 
 	var cmd *exec.Cmd
-	margs := make([]string, 0, 16)
-	rargs := make([]string, 0, 16)
+	margs := make([]string, 0, 32)
+	rargs := make([]string, 0, 32)
+
+	var qq string
+	var sr *strings.Replacer
+	var dr *strings.Replacer
+	if (len(shost) != 0) && (oP.RsyncCommand == "rsync") {
+		if len(dhost) != 0 {
+			// * s:d,       ssh d mkdir 'dst'; ssh d rsync -@ s:'\src' 'dst'
+			qq = "'"
+			sr = qwr
+			dr = qr
+		} else {
+			// * s:l,             mkdir  dst ;       rsync -@ s: \src   dst
+			qq = ""
+			sr = wr
+			dr = nil
+		}
+	} else {
+		if len(dhost) != 0 {
+			//   l:d,       ssh d mkdir 'dst'; ssh d rsync -@   'src' 'dst'
+			qq = "'"
+			sr = qr
+			dr = qr
+		} else {
+			// * l:l,             mkdir  dst ;       rsync -@    src   dst
+			qq = ""
+			sr = nil
+			dr = nil
+		}
+	}
 
 	// mkdir args
 	if len(oP.MkdirCommand) != 0 {
@@ -190,12 +222,29 @@ func syncDir(ctx context.Context, pc chan string, shost string, dhost string, n 
 			eMsg(E_DEBUG, nil, "syncDir[%d]: dir:%s sdir:%s ddir:%s", n, rdir, sdir, ddir)
 			eMsg(E_INFO, nil, "copying %s", sdir)
 
+			if sr != nil {
+				sdir = sr.Replace(sdir)
+			}
+			sdir = qq + sdir + qq
+
+			if dr != nil {
+				ddir = dr.Replace(ddir)
+			}
+			ddir = qq + ddir + qq
+
 			// rsync on destination host
-			// * l:l,              mkdir 'dst';       rsync -@   src dst
-			//   l:d,        ssh d mkdir 'dst'; ssh d rsync -@   src dst
-			// * d:d -> l:d, ssh d mkdir 'dst'; ssh d rsync -@   src dst
-			// * s:d,        ssh d mkdir 'dst'; ssh d rsync -@ s:src dst
-			// * s:l,              mkdir 'dst';       rsync -@ s:src dst
+			// * l:l,             mkdir  dst ;       rsync -@    src   dst
+			//   l:d,       ssh d mkdir 'dst'; ssh d rsync -@   'src' 'dst'
+			// * d:d = l:d
+			// * s:d,       ssh d mkdir 'dst'; ssh d rsync -@ s:'\src' 'dst'
+			// * s:l,             mkdir  dst ;       rsync -@ s: \src   dst
+
+			// cp on destination host
+			// * l:l,             mkdir  dst ;       cp -@    src   dst
+			//   l:d,       ssh d mkdir 'dst'; ssh d cp -@   'src' 'dst'
+			// * d:d = l:d
+			// * s:d,
+			// * s:l,
 
 			// mkdir
 			if len(margs) != 0 {
@@ -231,7 +280,7 @@ func syncDir(ctx context.Context, pc chan string, shost string, dhost string, n 
 			// rsync
 			src := sdir
 			if len(shost) != 0 {
-				src = fmt.Sprintf("%s:%s", shost, sdir)
+				src = shost + ":" + sdir
 			}
 
 			args := append(rargs, src, ddir)
