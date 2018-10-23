@@ -145,64 +145,34 @@ func syncDir(ctx context.Context, pc chan string, shost string, dhost string, n 
 	eMsg(E_DEBUG, nil, "syncDir[%d]: start shost:%s dhost:%s", n, shost, dhost)
 
 	var cmd *exec.Cmd
-	margs := make([]string, 0, 32)
-	rargs := make([]string, 0, 32)
 
 	var qq string
 	var sr *strings.Replacer
 	var dr *strings.Replacer
 	if (len(shost) != 0) && (oP.RsyncCommand == "rsync") {
 		if len(dhost) != 0 {
-			// * s:d,       ssh d mkdir 'dst'; ssh d rsync -@ s:'\src' 'dst'
+			// * s:d,       ssh d mkdir 'dst' ; rsync -@ s:'\src' 'dst'
 			qq = "'"
 			sr = qwr
 			dr = qr
 		} else {
-			// * s:l,             mkdir  dst ;       rsync -@ s: \src   dst
+			// * s:l,             mkdir  dst ; rsync -@ s: \src   dst
 			qq = ""
 			sr = wr
 			dr = nil
 		}
 	} else {
 		if len(dhost) != 0 {
-			//   l:d,       ssh d mkdir 'dst'; ssh d rsync -@   'src' 'dst'
+			//   l:d,       ssh d mkdir 'dst'; rsync -@   'src' 'dst'
 			qq = "'"
 			sr = qr
 			dr = qr
 		} else {
-			// * l:l,             mkdir  dst ;       rsync -@    src   dst
+			// * l:l,             mkdir  dst ; rsync -@    src   dst
 			qq = ""
 			sr = nil
 			dr = nil
 		}
-	}
-
-	// mkdir args
-	if len(oP.MkdirCommand) != 0 {
-		if len(dhost) != 0 {
-			margs = append(margs, oP.SshCommand)
-			if len(oP.SshOptions) != 0 {
-				margs = append(margs, oP.SshOptions[0:]...)
-			}
-			margs = append(margs, dhost)
-		}
-		margs = append(margs, oP.MkdirCommand)
-		if len(oP.MkdirOptions) != 0 {
-			margs = append(margs, oP.MkdirOptions[0:]...)
-		}
-	}
-
-	// rsync args
-	if len(dhost) != 0 {
-		rargs = append(rargs, oP.SshCommand)
-		if len(oP.SshOptions) != 0 {
-			rargs = append(rargs, oP.SshOptions[0:]...)
-		}
-		rargs = append(rargs, dhost)
-	}
-	rargs = append(rargs, oP.RsyncCommand)
-	if len(oP.RsyncOptions) != 0 {
-		rargs = append(rargs, oP.RsyncOptions[0:]...)
 	}
 
 	//
@@ -233,22 +203,40 @@ func syncDir(ctx context.Context, pc chan string, shost string, dhost string, n 
 			ddir = qq + ddir + qq
 
 			// rsync on destination host
-			// * l:l,             mkdir  dst ;       rsync -@    src   dst
-			//   l:d,       ssh d mkdir 'dst'; ssh d rsync -@   'src' 'dst'
+			// * l:l,             mkdir  dst  ; rsync -@    src   dst
+			//   l:d,       ssh d mkdir 'dst' ; rsync -@   'src' 'dst'
 			// * d:d = l:d
-			// * s:d,       ssh d mkdir 'dst'; ssh d rsync -@ s:'\src' 'dst'
-			// * s:l,             mkdir  dst ;       rsync -@ s: \src   dst
+			// * s:d,       ssh d mkdir 'dst' ; rsync -@ s:'\src' 'dst'
+			// * s:l,             mkdir  dst  ; rsync -@ s: \src   dst
 
 			// cp on destination host
-			// * l:l,             mkdir  dst ;       cp -@    src   dst
-			//   l:d,       ssh d mkdir 'dst'; ssh d cp -@   'src' 'dst'
+			// * l:l,             mkdir  dst  ; cp -@    src   dst
+			//   l:d,       ssh d mkdir 'dst' ; cp -@   'src' 'dst'
 			// * d:d = l:d
 			// * s:d,
 			// * s:l,
 
+			args := make([]string, 0, 32)
+
+			// ssh
+			if len(dhost) != 0 {
+				args = append(args, oP.SshCommand)
+				if len(oP.SshOptions) != 0 {
+					args = append(args, oP.SshOptions[0:]...)
+				}
+				args = append(args, dhost)
+			}
+
 			// mkdir
-			if len(margs) != 0 {
-				args := append(margs, ddir)
+			args = append(args, oP.MkdirCommand)
+			if len(oP.MkdirOptions) != 0 {
+				args = append(args, oP.MkdirOptions[0:]...)
+			}
+			args = append(args, ddir)
+
+			if len(dhost) != 0 {
+				args = append(args, ";")
+			} else {
 				eMsg(E_DEBUG, nil, "syncDir[%d]: %v", n, args)
 
 				cmd = exec.Command(args[0], args[1:]...)
@@ -275,15 +263,22 @@ func syncDir(ctx context.Context, pc chan string, shost string, dhost string, n 
 					dc <- es
 					return
 				}
+
+				args = args[:0]
 			}
 
 			// rsync
+			args = append(args, oP.RsyncCommand)
+			if len(oP.RsyncOptions) != 0 {
+				args = append(args, oP.RsyncOptions[0:]...)
+			}
+
 			src := sdir
 			if len(shost) != 0 {
 				src = shost + ":" + sdir
 			}
 
-			args := append(rargs, src, ddir)
+			args = append(args, src, ddir)
 			eMsg(E_DEBUG, nil, "syncDir[%d]: %v", n, args)
 
 			cmd = exec.Command(args[0], args[1:]...)
